@@ -2,8 +2,6 @@
 
 GameFriends is a web application that helps you track your game collection and see what your friends are playing. Connect with Discord to find friends who own the same games and discover new titles to play together.
 
-![GameFriends Screenshot](https://placeholder-for-screenshot.com)
-
 ## Features
 
 - **Game Collection Tracking**: Add games to your personal library
