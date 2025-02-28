@@ -76,3 +76,10 @@
     font-family: var(--font-retrocomputer);
   }
 }
+.gameboy-text {
+  font-family: var(--font-gameboy), sans-serif;
+}
+
+.retro-text {
+  font-family: var(--font-retrocomputer), sans-serif;
+}
