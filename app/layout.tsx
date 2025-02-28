@@ -17,7 +17,7 @@ import { ThemeProvider } from "@/components/theme-provider";
 import { Toaster } from "@/components/ui/toaster";
 
 export const metadata: Metadata = {
-  title: "Game Library",
+  title: "GameFriends",
   description:
     "Track your game collection and see what your friends are playing.",
 };
