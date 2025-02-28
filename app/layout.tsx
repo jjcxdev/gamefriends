@@ -4,20 +4,17 @@ import localFont from "next/font/local";
 import "./globals.css";
 
 const gameboy = localFont({
-  src: "../public/fonts/GameBoy.ttf",
-  display: "swap",
+  src: "../public/fonts/Gameboy.ttf",
   variable: "--font-gameboy",
 });
 
 const pixeland = localFont({
   src: "../public/fonts/Pixeland.ttf",
-  display: "swap",
   variable: "--font-pixeland",
 });
 
 const retrocomputer = localFont({
   src: "../public/fonts/Retrocomputer.ttf",
-  display: "swap",
   variable: "--font-retrocomputer",
 });
 
@@ -38,7 +35,7 @@ export default async function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body
-        className={`${gameboy.variable} ${pixeland.variable} ${retrocomputer.variable}`}
+        className={`${retrocomputer.variable} ${gameboy.variable} ${pixeland.variable}`}
       >
         <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
           {children}
