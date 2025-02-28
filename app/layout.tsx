@@ -4,12 +4,12 @@ import localFont from "next/font/local";
 import "./globals.css";
 
 const gameboyFont = localFont({
-  src: "../public/fonts/Gameboy.ttf",
+  src: "../public/fonts/GameBoy.ttf",
   variable: "--font-gameboy", // Optional: for CSS variable usage
 });
 
 const retrocomputerFont = localFont({
-  src: "../public/fonts/Retrocomputer.ttf",
+  src: "../public/fonts/RetroComputer.ttf",
   variable: "--font-retrocomputer", // Optional
 });
 
