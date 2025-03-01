@@ -18,7 +18,7 @@ export async function GET(request: Request) {
 
   try {
     // Try to get user data from discord_connections table first
-    const { data: discordConnection, error: connectionError } = await supabase
+    const { data: discordConnection } = await supabase
       .from("discord_connections")
       .select("discord_username, discord_avatar")
       .eq("discord_id", discordId)
