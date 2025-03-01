@@ -22,6 +22,12 @@ import { Logo } from "./logo";
 import { Footer } from "./footer";
 import { SignOutButton } from "@/components/sign-out-button";
 import { GameFriendAvatars } from "@/components/game-friend-avatars";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 // Types
 interface Game {
@@ -260,8 +266,29 @@ export function GameDashboard({ initialSession }: GameDashboardProps) {
             <Logo />
           </div>
           <div className="flex items-center gap-4">
-            <ThemeSwitch />
-            <SignOutButton />
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div>
+                    <ThemeSwitch />
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Toggle light/dark mode</p>
+                </TooltipContent>
+              </Tooltip>
+
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div>
+                    <SignOutButton />
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Sign out</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
           </div>
         </div>
         <div className="flex justify-end max-w-screen-lg mx-auto gap-4 items-center mb-8">
