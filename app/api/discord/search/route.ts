@@ -25,31 +25,72 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
     }
 
-    // Direct query with console logging
-    console.log(`Searching for Discord ID: "${query}" (type: ${typeof query})`);
+    console.log(`Attempting to search with Discord ID: "${query}"`);
 
-    // Explicitly use a string comparison
-    const { data: users, error } = await supabase
+    // Try multiple query approaches
+    const { data: exactMatch, error: exactError } = await supabase
       .from("discord_connections")
       .select("*")
-      .filter("discord_id", "eq", query.toString());
+      .eq("discord_id", query.toString());
 
-    console.log("Query results:", JSON.stringify(users), "Error:", error);
-
-    if (error) {
-      console.error("Search error:", error);
-      return NextResponse.json(
-        { error: "Database search failed" },
-        { status: 500 }
-      );
-    }
-
-    // Return the raw results for debugging
-    return NextResponse.json({
-      query: query,
-      users: users || [],
-      count: users?.length || 0,
+    console.log("Exact match attempt:", {
+      data: exactMatch,
+      error: exactError,
     });
+
+    // Try with textual comparison
+    const { data: textMatch, error: textError } = await supabase
+      .from("discord_connections")
+      .select("*")
+      .filter("discord_id", "ilike", query.toString());
+
+    console.log("Text match attempt:", { data: textMatch, error: textError });
+
+    // Try with raw query
+    const { data: rawMatch, error: rawError } = await supabase
+      .from("discord_connections")
+      .select("*")
+      .or(`discord_id.eq.${query},discord_id.eq."${query}"`);
+
+    console.log("Raw match attempt:", { data: rawMatch, error: rawError });
+
+    // Combine all unique results
+    const allMatches = [
+      ...new Set([
+        ...(exactMatch || []),
+        ...(textMatch || []),
+        ...(rawMatch || []),
+      ]),
+    ];
+
+    // Filter out current user
+    const filteredUsers = allMatches.filter(
+      (user) => user.user_id !== session.user.id
+    );
+
+    const result = {
+      users: filteredUsers.map((user) => ({
+        id: user.user_id,
+        discord_id: user.discord_id,
+        username: user.discord_username,
+        avatar: user.discord_avatar,
+        isConnected: false,
+      })),
+      debug: {
+        exactMatch: exactMatch?.length || 0,
+        textMatch: textMatch?.length || 0,
+        rawMatch: rawMatch?.length || 0,
+        query,
+        queryType: typeof query,
+        errors: {
+          exact: exactError?.message,
+          text: textError?.message,
+          raw: rawError?.message,
+        },
+      },
+    };
+
+    return NextResponse.json(result);
   } catch (error) {
     console.error("Error searching Discord users:", error);
     return NextResponse.json(
