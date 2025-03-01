@@ -27,56 +27,34 @@ export async function GET(request: Request) {
     }
 
     console.log(
-      `Searching for Discord user with query: ${query}, current user: ${session.user.id}`
+      `Searching for Discord ID: ${query}, current user: ${session.user.id}`
     );
 
-    // First try exact match on discord_id
-    const { data: idMatches, error: idError } = await supabase
+    // Direct query by discord_id only
+    const { data: users, error } = await supabase
       .from("discord_connections")
       .select("user_id, discord_id, discord_username, discord_avatar")
       .eq("discord_id", query);
 
-    console.log("ID match results:", idMatches, "Error:", idError);
+    console.log("Search results:", JSON.stringify(users), "Error:", error);
 
-    // Then try username search - using a different approach
-    const { data: usernameMatches, error: usernameError } = await supabase
-      .from("discord_connections")
-      .select("user_id, discord_id, discord_username, discord_avatar")
-      .filter("discord_username", "ilike", `%${query}%`)
-      .limit(10);
-
-    console.log(
-      "Username match results:",
-      usernameMatches,
-      "Error:",
-      usernameError
-    );
-
-    if (idError || usernameError) {
-      console.error("Search error:", idError || usernameError);
+    if (error) {
+      console.error("Search error:", error);
       return NextResponse.json(
         { error: "Database search failed" },
         { status: 500 }
       );
     }
 
-    // Combine results, prioritizing exact ID matches
-    const allMatches = [...(idMatches || []), ...(usernameMatches || [])];
-
-    // Remove duplicates by discord_id
-    const uniqueUsers = Array.from(
-      new Map(allMatches.map((user) => [user.discord_id, user])).values()
-    );
-
-    // Filter out current user
-    const filteredUsers = uniqueUsers.filter(
-      (user) => user.user_id !== session.user.id
-    );
-
-    if (filteredUsers.length === 0) {
-      console.log("No users found for query:", query);
+    if (!users || users.length === 0) {
+      console.log("No users found for Discord ID:", query);
       return NextResponse.json({ users: [] });
     }
+
+    // Filter out current user
+    const filteredUsers = users.filter(
+      (user) => user.user_id !== session.user.id
+    );
 
     // Check which users are already friends
     const userIds = filteredUsers.map((user) => user.user_id);
