@@ -1,6 +1,7 @@
 import { createClient } from "@/utils/supabase/server";
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
+import { getDiscordAvatarUrl } from "@/utils/discord";
 
 interface UserIdentity {
   id: string;
@@ -107,7 +108,10 @@ export async function GET(request: Request) {
                   user_id: data.user.id,
                   discord_id: discordIdentity.id,
                   discord_username: discordUser.username || "Unknown",
-                  discord_avatar: discordUser.avatar || null,
+                  discord_avatar: getDiscordAvatarUrl(
+                    discordIdentity.id,
+                    discordUser.avatar
+                  ),
                   updated_at: new Date().toISOString(),
                 },
                 {

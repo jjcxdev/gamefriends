@@ -1,6 +1,7 @@
 import { createClient } from "@/utils/supabase/server";
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
+import { getDiscordAvatarUrl } from "@/utils/discord";
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
@@ -69,7 +70,7 @@ export async function GET(request: Request) {
     // Return the user data
     return NextResponse.json({
       username: discordUser.username,
-      avatar: discordUser.avatar,
+      avatar: getDiscordAvatarUrl(discordId, discordUser.avatar),
     });
   } catch (error) {
     console.error("Error fetching Discord user:", error);

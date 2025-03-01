@@ -1,6 +1,7 @@
 import { cookies } from "next/headers";
 import { createClient } from "@/utils/supabase/server";
 import { NextResponse } from "next/server";
+import { getDiscordAvatarUrl } from "@/utils/discord";
 
 export async function POST() {
   const cookieStore = cookies();
@@ -82,7 +83,10 @@ export async function POST() {
           user_id: session.user.id,
           discord_id: user.discord_id,
           discord_username: discordUser.username || "Unknown",
-          discord_avatar: discordUser.avatar || null,
+          discord_avatar: getDiscordAvatarUrl(
+            user.discord_id,
+            discordUser.avatar
+          ),
           updated_at: new Date().toISOString(),
         },
         {
