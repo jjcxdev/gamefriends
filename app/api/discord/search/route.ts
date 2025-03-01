@@ -29,7 +29,7 @@ export async function GET(request: Request) {
     console.log(`Searching for Discord user with query: ${query}`);
 
     // First, try a direct match on discord_id
-    let { data: directMatch, error: directMatchError } = await supabase
+    const directMatchResult = await supabase
       .from("discord_connections")
       .select(
         `
@@ -44,14 +44,17 @@ export async function GET(request: Request) {
 
     console.log(
       "Direct match result:",
-      directMatch,
+      directMatchResult.data,
       "Error:",
-      directMatchError
+      directMatchResult.error
     );
 
+    // Initialize users variable
+    let users = directMatchResult.data || [];
+
     // If no direct match, try the username search
-    if (!directMatch || directMatch.length === 0) {
-      const { data: usernameMatch, error: usernameMatchError } = await supabase
+    if (users.length === 0) {
+      const usernameMatchResult = await supabase
         .from("discord_connections")
         .select(
           `
@@ -67,32 +70,33 @@ export async function GET(request: Request) {
 
       console.log(
         "Username match result:",
-        usernameMatch,
+        usernameMatchResult.data,
         "Error:",
-        usernameMatchError
+        usernameMatchResult.error
       );
 
-      if (usernameMatchError) {
-        console.error("Error searching by username:", usernameMatchError);
+      if (usernameMatchResult.error) {
+        console.error(
+          "Error searching by username:",
+          usernameMatchResult.error
+        );
         return NextResponse.json(
           { error: "Failed to search users by username" },
           { status: 500 }
         );
       }
 
-      directMatch = usernameMatch;
+      users = usernameMatchResult.data || [];
     }
 
-    const users = directMatch;
-
-    if (!users || users.length === 0) {
+    if (users.length === 0) {
       console.log("No users found for query:", query);
       return NextResponse.json({ users: [] });
     }
 
     // Check which users are already friends
     const userIds = users.map((user) => user.user_id);
-    const { data: friendConnections, error: friendError } = await supabase
+    const friendResult = await supabase
       .from("friend_connections")
       .select("friend_id")
       .eq("user_id", session.user.id)
@@ -100,13 +104,13 @@ export async function GET(request: Request) {
 
     console.log(
       "Friend connections:",
-      friendConnections,
+      friendResult.data,
       "Error:",
-      friendError
+      friendResult.error
     );
 
     const friendIds = new Set(
-      friendConnections?.map((fc) => fc.friend_id) || []
+      friendResult.data?.map((fc) => fc.friend_id) || []
     );
 
     const result = {
