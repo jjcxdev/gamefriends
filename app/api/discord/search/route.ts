@@ -9,6 +9,7 @@ export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
     const query = searchParams.get("query");
+    const includeCurrentUser = searchParams.get("include_self") === "true";
 
     if (!query) {
       return NextResponse.json(
@@ -40,18 +41,33 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
-    // Filter out the current user and format response
+    // Filter out the current user if includeCurrentUser is false
     const users =
       connections
-        ?.filter((conn) => conn.user_id !== session.user.id)
+        ?.filter(
+          (conn) => includeCurrentUser || conn.user_id !== session.user.id
+        )
         ?.map((conn) => ({
           id: conn.user_id,
           discord_id: conn.discord_id,
           username: conn.discord_username,
           avatar: conn.discord_avatar,
+          isSelf: conn.user_id === session.user.id,
         })) || [];
 
-    return NextResponse.json({ users });
+    console.log("Filtered users:", users);
+    console.log("Current user ID:", session.user.id);
+
+    return NextResponse.json({
+      users,
+      debug: {
+        query,
+        resultsFound: connections?.length || 0,
+        resultsAfterFiltering: users.length,
+        currentUserId: session.user.id,
+        includeCurrentUser,
+      },
+    });
   } catch (error) {
     console.error("Error searching Discord users:", error);
     return NextResponse.json(
