@@ -28,11 +28,20 @@ export async function GET(request: Request) {
 
     console.log(`Searching for Discord ID: "${query}"`);
 
-    // Direct query to discord_connections table
+    // TEST QUERY - Log a direct fetch by ID for debugging
+    const testQuery = await supabase
+      .from("discord_connections")
+      .select("*")
+      .eq("discord_id", "298457552302374913");
+
+    console.log("Test query for known ID:", testQuery);
+
+    // Try multiple approaches to catch potential type mismatches
     const { data: connections, error } = await supabase
       .from("discord_connections")
       .select("user_id, discord_id, discord_username, discord_avatar")
-      .eq("discord_id", query);
+      .or(`discord_id.eq.${query},discord_id.eq."${query}"`)
+      .limit(20);
 
     console.log("Query results:", connections);
 
@@ -66,6 +75,7 @@ export async function GET(request: Request) {
         resultsAfterFiltering: users.length,
         currentUserId: session.user.id,
         includeCurrentUser,
+        testQueryResults: testQuery.data?.length || 0,
       },
     });
   } catch (error) {
