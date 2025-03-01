@@ -28,7 +28,7 @@ export async function GET(request: Request) {
 
     console.log(`Searching for Discord user with query: ${query}`);
 
-    // Search for users by Discord username or ID
+    // Search directly in discord_connections table
     const { data: users, error: searchError } = await supabase
       .from("discord_connections")
       .select(
@@ -36,13 +36,11 @@ export async function GET(request: Request) {
         user_id,
         discord_id,
         discord_username,
-        discord_avatar,
-        users!inner (
-          id
-        )
+        discord_avatar
       `
       )
-      .or(`discord_username.ilike.%${query}%, discord_id.eq.${query}`)
+      .or(`discord_username.ilike.%${query}%,discord_id.eq.${query}`)
+      .neq("user_id", session.user.id) // Don't include the current user
       .limit(10);
 
     if (searchError) {
@@ -81,10 +79,7 @@ export async function GET(request: Request) {
   } catch (error) {
     console.error("Error searching Discord users:", error);
     return NextResponse.json(
-      {
-        error: "Failed to search Discord users",
-        details: error instanceof Error ? error.message : String(error),
-      },
+      { error: "Failed to search users" },
       { status: 500 }
     );
   }
