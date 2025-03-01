@@ -26,10 +26,12 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
     }
 
-    console.log(`Searching for Discord user with query: ${query}`);
+    console.log(
+      `Searching for Discord user with query: ${query}, current user: ${session.user.id}`
+    );
 
-    // First, try a direct match on discord_id
-    const directMatchResult = await supabase
+    // Simple direct query - no filters
+    const { data: users, error } = await supabase
       .from("discord_connections")
       .select(
         `
@@ -39,82 +41,42 @@ export async function GET(request: Request) {
         discord_avatar
       `
       )
-      .eq("discord_id", query)
-      .neq("user_id", session.user.id);
+      .or(`discord_id.eq.${query},discord_username.ilike.%${query}%`);
 
-    console.log(
-      "Direct match result:",
-      directMatchResult.data,
-      "Error:",
-      directMatchResult.error
-    );
+    console.log("Search result:", JSON.stringify(users), "Error:", error);
 
-    // Initialize users variable
-    let users = directMatchResult.data || [];
-
-    // If no direct match, try the username search
-    if (users.length === 0) {
-      const usernameMatchResult = await supabase
-        .from("discord_connections")
-        .select(
-          `
-          user_id,
-          discord_id,
-          discord_username,
-          discord_avatar
-        `
-        )
-        .ilike("discord_username", `%${query}%`)
-        .neq("user_id", session.user.id)
-        .limit(10);
-
-      console.log(
-        "Username match result:",
-        usernameMatchResult.data,
-        "Error:",
-        usernameMatchResult.error
+    if (error) {
+      console.error("Search error:", error);
+      return NextResponse.json(
+        { error: "Database search failed" },
+        { status: 500 }
       );
-
-      if (usernameMatchResult.error) {
-        console.error(
-          "Error searching by username:",
-          usernameMatchResult.error
-        );
-        return NextResponse.json(
-          { error: "Failed to search users by username" },
-          { status: 500 }
-        );
-      }
-
-      users = usernameMatchResult.data || [];
     }
 
-    if (users.length === 0) {
+    if (!users || users.length === 0) {
       console.log("No users found for query:", query);
       return NextResponse.json({ users: [] });
     }
 
     // Check which users are already friends
     const userIds = users.map((user) => user.user_id);
-    const friendResult = await supabase
+    const { data: friendConnections } = await supabase
       .from("friend_connections")
       .select("friend_id")
       .eq("user_id", session.user.id)
       .in("friend_id", userIds);
 
-    console.log(
-      "Friend connections:",
-      friendResult.data,
-      "Error:",
-      friendResult.error
+    const friendIds = new Set(
+      friendConnections?.map((fc) => fc.friend_id) || []
     );
 
-    const friendIds = new Set(
-      friendResult.data?.map((fc) => fc.friend_id) || []
+    // Filter out the current user from results
+    const filteredUsers = users.filter(
+      (user) => user.user_id !== session.user.id
     );
 
     const result = {
-      users: users.map((user) => ({
+      users: filteredUsers.map((user) => ({
         id: user.user_id,
         discord_id: user.discord_id,
         username: user.discord_username,
@@ -123,7 +85,7 @@ export async function GET(request: Request) {
       })),
     };
 
-    console.log("Returning result:", result);
+    console.log("Returning result:", JSON.stringify(result));
     return NextResponse.json(result);
   } catch (error) {
     console.error("Error searching Discord users:", error);
