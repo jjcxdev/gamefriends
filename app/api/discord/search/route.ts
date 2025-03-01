@@ -21,22 +21,20 @@ export async function GET(request: Request) {
     const {
       data: { session },
     } = await supabase.auth.getSession();
-
     if (!session) {
       return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
     }
 
-    console.log(
-      `Searching for Discord ID: ${query}, current user: ${session.user.id}`
-    );
+    // Direct query with console logging
+    console.log(`Searching for Discord ID: "${query}" (type: ${typeof query})`);
 
-    // Direct query by discord_id only
+    // Explicitly use a string comparison
     const { data: users, error } = await supabase
       .from("discord_connections")
-      .select("user_id, discord_id, discord_username, discord_avatar")
-      .eq("discord_id", query);
+      .select("*")
+      .filter("discord_id", "eq", query.toString());
 
-    console.log("Search results:", JSON.stringify(users), "Error:", error);
+    console.log("Query results:", JSON.stringify(users), "Error:", error);
 
     if (error) {
       console.error("Search error:", error);
@@ -46,40 +44,12 @@ export async function GET(request: Request) {
       );
     }
 
-    if (!users || users.length === 0) {
-      console.log("No users found for Discord ID:", query);
-      return NextResponse.json({ users: [] });
-    }
-
-    // Filter out current user
-    const filteredUsers = users.filter(
-      (user) => user.user_id !== session.user.id
-    );
-
-    // Check which users are already friends
-    const userIds = filteredUsers.map((user) => user.user_id);
-    const { data: friendConnections } = await supabase
-      .from("friend_connections")
-      .select("friend_id")
-      .eq("user_id", session.user.id)
-      .in("friend_id", userIds);
-
-    const friendIds = new Set(
-      friendConnections?.map((fc) => fc.friend_id) || []
-    );
-
-    const result = {
-      users: filteredUsers.map((user) => ({
-        id: user.user_id,
-        discord_id: user.discord_id,
-        username: user.discord_username,
-        avatar: user.discord_avatar,
-        isConnected: friendIds.has(user.user_id),
-      })),
-    };
-
-    console.log("Returning result:", JSON.stringify(result));
-    return NextResponse.json(result);
+    // Return the raw results for debugging
+    return NextResponse.json({
+      query: query,
+      users: users || [],
+      count: users?.length || 0,
+    });
   } catch (error) {
     console.error("Error searching Discord users:", error);
     return NextResponse.json(
