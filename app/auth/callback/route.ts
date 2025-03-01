@@ -58,16 +58,22 @@ export async function GET(request: Request) {
 
       console.log("Discord identity found with ID:", discordIdentity.id);
 
-      // Update the user's discord_id
-      const { error: updateError } = await supabase
-        .from("users")
-        .update({ discord_id: discordIdentity.id })
-        .eq("id", data.user.id);
+      // First, ensure the user record exists with discord_id
+      const { error: userError } = await supabase.from("users").upsert(
+        {
+          id: data.user.id,
+          discord_id: discordIdentity.id,
+          updated_at: new Date().toISOString(),
+        },
+        {
+          onConflict: "id",
+        }
+      );
 
-      if (updateError) {
-        console.error("Error updating user's discord_id:", updateError);
+      if (userError) {
+        console.error("Error upserting user record:", userError);
       } else {
-        console.log("Updated user's discord_id successfully");
+        console.log("User record updated with discord_id");
       }
 
       // Fetch Discord user details using the access token
@@ -102,15 +108,15 @@ export async function GET(request: Request) {
           discordUser.avatar ? "Present" : "Missing"
         );
 
-        // Store only the user data, not the tokens
-        const { error: upsertError } = await supabase
+        // Store Discord connection data
+        const { error: connectionError } = await supabase
           .from("discord_connections")
           .upsert(
             {
               user_id: data.user.id,
               discord_id: discordIdentity.id,
-              discord_username: discordUser.username,
-              discord_avatar: discordUser.avatar,
+              discord_username: discordUser.username || "Unknown",
+              discord_avatar: discordUser.avatar || null,
               updated_at: new Date().toISOString(),
             },
             {
@@ -118,8 +124,9 @@ export async function GET(request: Request) {
             }
           );
 
-        if (upsertError) {
-          console.error("Error upserting Discord connection:", upsertError);
+        if (connectionError) {
+          console.error("Error upserting Discord connection:", connectionError);
+          console.error("Error details:", JSON.stringify(connectionError));
         } else {
           console.log("Discord connection data saved successfully");
         }
