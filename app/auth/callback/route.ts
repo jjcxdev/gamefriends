@@ -76,65 +76,62 @@ export async function GET(request: Request) {
         console.log("User record updated with discord_id");
       }
 
-      // Fetch Discord user details using the access token
-      try {
-        console.log("Fetching Discord user details...");
-        const discordUserResponse = await fetch(
-          "https://discord.com/api/users/@me",
-          {
-            headers: {
-              Authorization: `Bearer ${discordIdentity.access_token}`,
-            },
-          }
-        );
-
-        if (!discordUserResponse.ok) {
-          const errorText = await discordUserResponse.text();
-          console.error(
-            "Failed to fetch Discord user details:",
-            discordUserResponse.status,
-            errorText
-          );
-          return NextResponse.redirect(
-            new URL("/login?error=discordapi", requestUrl.origin)
-          );
-        }
-
-        const discordUser = await discordUserResponse.json();
-        console.log(
-          "Discord user details fetched:",
-          discordUser.username,
-          "Avatar:",
-          discordUser.avatar ? "Present" : "Missing"
-        );
-
-        // Store Discord connection data
-        const { error: connectionError } = await supabase
-          .from("discord_connections")
-          .upsert(
+      // Use bot token to fetch Discord user data
+      const botToken = process.env.DISCORD_BOT_TOKEN;
+      if (botToken) {
+        try {
+          console.log("Fetching Discord user details with bot token...");
+          const discordUserResponse = await fetch(
+            `https://discord.com/api/v10/users/${discordIdentity.id}`,
             {
-              user_id: data.user.id,
-              discord_id: discordIdentity.id,
-              discord_username: discordUser.username || "Unknown",
-              discord_avatar: discordUser.avatar || null,
-              updated_at: new Date().toISOString(),
-            },
-            {
-              onConflict: "user_id",
+              headers: {
+                Authorization: `Bot ${botToken}`,
+              },
             }
           );
 
-        if (connectionError) {
-          console.error("Error upserting Discord connection:", connectionError);
-          console.error("Error details:", JSON.stringify(connectionError));
-        } else {
-          console.log("Discord connection data saved successfully");
+          if (discordUserResponse.ok) {
+            const discordUser = await discordUserResponse.json();
+            console.log(
+              "Discord user details fetched with bot:",
+              discordUser.username,
+              "Avatar:",
+              discordUser.avatar ? "Present" : "Missing"
+            );
+
+            // Store Discord connection data
+            const { error: connectionError } = await supabase
+              .from("discord_connections")
+              .upsert(
+                {
+                  user_id: data.user.id,
+                  discord_id: discordIdentity.id,
+                  discord_username: discordUser.username || "Unknown",
+                  discord_avatar: discordUser.avatar || null,
+                  updated_at: new Date().toISOString(),
+                },
+                {
+                  onConflict: "user_id",
+                }
+              );
+
+            if (connectionError) {
+              console.error(
+                "Error upserting Discord connection with bot token:",
+                connectionError
+              );
+            } else {
+              console.log(
+                "Discord connection data saved successfully with bot token"
+              );
+            }
+          }
+        } catch (botError) {
+          console.error(
+            "Error fetching Discord user with bot token:",
+            botError
+          );
         }
-      } catch (fetchError) {
-        console.error("Error in Discord API request:", fetchError);
-        return NextResponse.redirect(
-          new URL("/login?error=discordfetch", requestUrl.origin)
-        );
       }
     } catch (sessionError) {
       console.error("Error in auth callback:", sessionError);

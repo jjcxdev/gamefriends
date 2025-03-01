@@ -28,73 +28,56 @@ export async function GET(request: Request) {
 
     console.log(`Searching for Discord user with query: ${query}`);
 
-    // Check if the query is a Discord ID
-    const isDiscordId = /^\d+$/.test(query);
+    // Search for users by Discord username or ID
+    const { data: users, error: searchError } = await supabase
+      .from("discord_connections")
+      .select(
+        `
+        user_id,
+        discord_id,
+        discord_username,
+        discord_avatar,
+        users!inner (
+          id
+        )
+      `
+      )
+      .or(`discord_username.ilike.%${query}%, discord_id.eq.${query}`)
+      .limit(10);
 
-    if (isDiscordId) {
-      console.log(`Query is a Discord ID: ${query}`);
-
-      // Find user by Discord ID
-      const { data: user, error: userError } = await supabase
-        .from("users")
-        .select("id, discord_id")
-        .eq("discord_id", query)
-        .single();
-
-      if (userError) {
-        console.error("Error finding user:", userError);
-        // If no user found, return empty results
-        if (userError.code === "PGRST116") {
-          return NextResponse.json({ users: [] });
-        }
-        throw userError;
-      }
-
-      if (user) {
-        console.log(`Found user with ID: ${user.id}`);
-
-        // Get Discord details from discord_connections
-        const { data: discordConnection, error: connectionError } =
-          await supabase
-            .from("discord_connections")
-            .select("discord_username, discord_avatar")
-            .eq("user_id", user.id)
-            .single();
-
-        if (connectionError) {
-          console.error("Error getting Discord connection:", connectionError);
-        }
-
-        // Check if this user is already a friend
-        const { data: existingConnection, error: friendError } = await supabase
-          .from("friend_connections")
-          .select()
-          .eq("user_id", session.user.id)
-          .eq("friend_id", user.id)
-          .maybeSingle();
-
-        if (friendError) {
-          console.error("Error checking friend connection:", friendError);
-        }
-
-        return NextResponse.json({
-          users: [
-            {
-              id: user.id,
-              discord_id: user.discord_id,
-              username:
-                discordConnection?.discord_username ||
-                `User ${user.discord_id.slice(-4)}`,
-              avatar: discordConnection?.discord_avatar,
-              isConnected: !!existingConnection,
-            },
-          ],
-        });
-      }
+    if (searchError) {
+      console.error("Error searching users:", searchError);
+      return NextResponse.json(
+        { error: "Failed to search users" },
+        { status: 500 }
+      );
     }
 
-    // If no user found or query isn't a Discord ID
-    return NextResponse.json({ users: [] });
+    if (!users || users.length === 0) {
+      return NextResponse.json({ users: [] });
+    }
+
+    // Check which users are already friends
+    const userIds = users.map((user) => user.user_id);
+    const { data: friendConnections } = await supabase
+      .from("friend_connections")
+      .select("friend_id")
+      .eq("user_id", session.user.id)
+      .in("friend_id", userIds);
+
+    const friendIds = new Set(
+      friendConnections?.map((fc) => fc.friend_id) || []
+    );
+
+    return NextResponse.json({
+      users: users.map((user) => ({
+        id: user.user_id,
+        discord_id: user.discord_id,
+        username: user.discord_username,
+        avatar: user.discord_avatar,
+        isConnected: friendIds.has(user.user_id),
+      })),
+    });
   } catch (error) {
     console.error("Error searching Discord users:", error);
     return NextResponse.json(
