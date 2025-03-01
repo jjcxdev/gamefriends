@@ -33,30 +33,16 @@ export async function GET(request: Request) {
     // First try exact match on discord_id
     const { data: idMatches, error: idError } = await supabase
       .from("discord_connections")
-      .select(
-        `
-        user_id,
-        discord_id,
-        discord_username,
-        discord_avatar
-      `
-      )
+      .select("user_id, discord_id, discord_username, discord_avatar")
       .eq("discord_id", query);
 
     console.log("ID match results:", idMatches, "Error:", idError);
 
-    // Then try username search
+    // Then try username search - using a different approach
     const { data: usernameMatches, error: usernameError } = await supabase
       .from("discord_connections")
-      .select(
-        `
-        user_id,
-        discord_id,
-        discord_username,
-        discord_avatar
-      `
-      )
-      .ilike("discord_username", `%${query}%`)
+      .select("user_id, discord_id, discord_username, discord_avatar")
+      .filter("discord_username", "ilike", `%${query}%`)
       .limit(10);
 
     console.log(
