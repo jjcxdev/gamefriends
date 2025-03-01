@@ -1,12 +1,15 @@
 import { createClient } from "@/utils/supabase/server";
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
-import { UserIdentity } from "@supabase/supabase-js";
 
-interface DiscordIdentityData {
+interface UserIdentity {
+  id: string;
+  provider: string;
+}
+
+interface DiscordIdentityData extends UserIdentity {
+  provider: "discord";
   access_token: string;
-  refresh_token: string;
-  expires_in: number;
 }
 
 export async function GET(request: Request) {
@@ -21,36 +24,52 @@ export async function GET(request: Request) {
 
     if (!error && data?.user) {
       const discordIdentity = data.user.identities?.find(
-        (
-          identity: UserIdentity
-        ): identity is UserIdentity & DiscordIdentityData =>
-          identity.provider === "discord"
-      );
+        (identity) => identity.provider === "discord"
+      ) as DiscordIdentityData | undefined;
 
       if (discordIdentity) {
-        // Update the user's discord_id and store connection data
-        await Promise.all([
-          supabase
-            .from("users")
-            .update({ discord_id: discordIdentity.id })
-            .eq("id", data.user.id),
+        // Update the user's discord_id
+        await supabase
+          .from("users")
+          .update({ discord_id: discordIdentity.id })
+          .eq("id", data.user.id);
 
-          supabase.from("discord_connections").upsert(
+        // Fetch Discord user details using the access token
+        try {
+          const discordUserResponse = await fetch(
+            "https://discord.com/api/users/@me",
             {
-              user_id: data.user.id,
-              discord_id: discordIdentity.id,
-              access_token: discordIdentity.access_token,
-              refresh_token: discordIdentity.refresh_token,
-              scopes: "identify email guilds guilds.members.read",
-              token_expires_at: new Date(
-                Date.now() + (discordIdentity.expires_in || 604800) * 1000
-              ).toISOString(),
-            },
-            {
-              onConflict: "user_id",
+              headers: {
+                Authorization: `Bearer ${discordIdentity.access_token}`,
+              },
             }
-          ),
-        ]);
+          );
+
+          if (discordUserResponse.ok) {
+            const discordUser = await discordUserResponse.json();
+
+            // Store only the user data, not the tokens
+            await supabase.from("discord_connections").upsert(
+              {
+                user_id: data.user.id,
+                discord_id: discordIdentity.id,
+                discord_username: discordUser.username,
+                discord_avatar: discordUser.avatar,
+                updated_at: new Date().toISOString(),
+              },
+              {
+                onConflict: "user_id",
+              }
+            );
+          } else {
+            console.error(
+              "Failed to fetch Discord user details:",
+              await discordUserResponse.text()
+            );
+          }
+        } catch (fetchError) {
+          console.error("Error fetching Discord user data:", fetchError);
+        }
       }
     }
   }
