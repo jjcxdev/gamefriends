@@ -30,8 +30,8 @@ export async function GET(request: Request) {
       `Searching for Discord user with query: ${query}, current user: ${session.user.id}`
     );
 
-    // Simple direct query - no filters
-    const { data: users, error } = await supabase
+    // First try exact match on discord_id
+    const { data: idMatches, error: idError } = await supabase
       .from("discord_connections")
       .select(
         `
@@ -41,25 +41,59 @@ export async function GET(request: Request) {
         discord_avatar
       `
       )
-      .or(`discord_id.eq.${query},discord_username.ilike.%${query}%`);
+      .eq("discord_id", query);
 
-    console.log("Search result:", JSON.stringify(users), "Error:", error);
+    console.log("ID match results:", idMatches, "Error:", idError);
 
-    if (error) {
-      console.error("Search error:", error);
+    // Then try username search
+    const { data: usernameMatches, error: usernameError } = await supabase
+      .from("discord_connections")
+      .select(
+        `
+        user_id,
+        discord_id,
+        discord_username,
+        discord_avatar
+      `
+      )
+      .ilike("discord_username", `%${query}%`)
+      .limit(10);
+
+    console.log(
+      "Username match results:",
+      usernameMatches,
+      "Error:",
+      usernameError
+    );
+
+    if (idError || usernameError) {
+      console.error("Search error:", idError || usernameError);
       return NextResponse.json(
         { error: "Database search failed" },
         { status: 500 }
       );
     }
 
-    if (!users || users.length === 0) {
+    // Combine results, prioritizing exact ID matches
+    const allMatches = [...(idMatches || []), ...(usernameMatches || [])];
+
+    // Remove duplicates by discord_id
+    const uniqueUsers = Array.from(
+      new Map(allMatches.map((user) => [user.discord_id, user])).values()
+    );
+
+    // Filter out current user
+    const filteredUsers = uniqueUsers.filter(
+      (user) => user.user_id !== session.user.id
+    );
+
+    if (filteredUsers.length === 0) {
       console.log("No users found for query:", query);
       return NextResponse.json({ users: [] });
     }
 
     // Check which users are already friends
-    const userIds = users.map((user) => user.user_id);
+    const userIds = filteredUsers.map((user) => user.user_id);
     const { data: friendConnections } = await supabase
       .from("friend_connections")
       .select("friend_id")
@@ -68,11 +102,6 @@ export async function GET(request: Request) {
 
     const friendIds = new Set(
       friendConnections?.map((fc) => fc.friend_id) || []
-    );
-
-    // Filter out the current user from results
-    const filteredUsers = users.filter(
-      (user) => user.user_id !== session.user.id
     );
 
     const result = {
