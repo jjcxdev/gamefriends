@@ -9,6 +9,15 @@ const config: Config = {
   ],
   theme: {
     extend: {
+      keyframes: {
+        "progress-chunk": {
+          "0%, 5%": { opacity: "0.2" },
+          "15%, 100%": { opacity: "1" },
+        },
+      },
+      animation: {
+        "progress-chunk": "progress-chunk 2s linear forwards",
+      },
       fontFamily: {
         gameboy: ["var(--font-gameboy)"],
         pixeland: ["var(--font-pixeland)"],
