@@ -28,6 +28,13 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { EllipsisVertical, Trash } from "lucide-react";
 
 // Types
 interface Game {
@@ -218,17 +225,24 @@ export function GameDashboard({ initialSession }: GameDashboardProps) {
     fetchData();
   };
 
-  const GameRow = ({
-    game,
-    friendGames,
-  }: {
-    game: Game;
-    friendGames?: number[];
-  }) => {
-    const friendHasGame = friendGames?.includes(game.id) ?? false;
+  const handleDeleteGame = async (gameId: number) => {
+    try {
+      const { error } = await supabase
+        .from("user_games")
+        .delete()
+        .eq("user_id", session?.user?.id)
+        .eq("game_id", gameId);
 
+      if (error) throw error;
+      fetchData(); // Refresh the games list
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Error deleting game");
+    }
+  };
+
+  const GameRow = ({ game }: { game: Game }) => {
     return (
-      <div className="game-row">
+      <div className="game-row flex justify-between items-center w-full">
         <div className="flex items-center gap-3">
           <div className="w-10 h-auto rounded bg-muted flex-shrink-0 overflow-hidden">
             <Image
@@ -248,12 +262,22 @@ export function GameDashboard({ initialSession }: GameDashboardProps) {
             )}
           </div>
         </div>
-        <div
-          className="friend-avatar"
-          style={{ opacity: friendHasGame ? 1 : 0.5 }}
-        >
-          {/* Discord avatar */}
-        </div>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" className="h-8 w-8 p-0">
+              <EllipsisVertical className="h-4 w-4" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem
+              className="text-destructive"
+              onClick={() => handleDeleteGame(game.id)}
+            >
+              <Trash className="h-4 w-4 mr-2" />
+              Delete Game
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
     );
   };
@@ -338,14 +362,7 @@ export function GameDashboard({ initialSession }: GameDashboardProps) {
                           return (
                             <tr key={game.id}>
                               <td className="p-4 w-1/3 border-r">
-                                <GameRow
-                                  game={game}
-                                  friendGames={friendOwnerships
-                                    .filter(
-                                      (o) => o.user_id !== session?.user?.id
-                                    )
-                                    .map((o) => o.game_id)}
-                                />
+                                <GameRow game={game} />
                               </td>
                               <td className="p-4">
                                 <GameFriendAvatars
