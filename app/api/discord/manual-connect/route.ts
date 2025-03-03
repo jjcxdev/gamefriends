@@ -16,24 +16,24 @@ export async function POST() {
       return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
     }
 
-    // Get the user's Discord ID from the users table
-    const { data: user, error: userError } = await supabase
-      .from("users")
+    // Get the user's Discord ID from discord_connections table
+    const { data: connection, error: connectionError } = await supabase
+      .from("discord_connections")
       .select("discord_id")
-      .eq("id", session.user.id)
+      .eq("user_id", session.user.id)
       .single();
 
-    if (userError) {
+    if (connectionError) {
       return NextResponse.json(
         {
-          error: "Error fetching user",
-          details: userError,
+          error: "Error fetching Discord connection",
+          details: connectionError,
         },
         { status: 500 }
       );
     }
 
-    if (!user.discord_id) {
+    if (!connection?.discord_id) {
       return NextResponse.json(
         {
           error: "No Discord ID found for user",
@@ -54,7 +54,7 @@ export async function POST() {
     }
 
     const response = await fetch(
-      `https://discord.com/api/v10/users/${user.discord_id}`,
+      `https://discord.com/api/v10/users/${connection.discord_id}`,
       {
         headers: {
           Authorization: `Bot ${botToken}`,
@@ -81,10 +81,10 @@ export async function POST() {
       .upsert(
         {
           user_id: session.user.id,
-          discord_id: user.discord_id,
+          discord_id: connection.discord_id,
           discord_username: discordUser.username || "Unknown",
           discord_avatar: getDiscordAvatarUrl(
-            user.discord_id,
+            connection.discord_id,
             discordUser.avatar
           ),
           updated_at: new Date().toISOString(),
@@ -108,7 +108,7 @@ export async function POST() {
       success: true,
       message: "Discord connection created successfully",
       user_id: session.user.id,
-      discord_id: user.discord_id,
+      discord_id: connection.discord_id,
       discord_username: discordUser.username,
       discord_avatar: discordUser.avatar,
     });

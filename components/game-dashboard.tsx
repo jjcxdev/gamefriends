@@ -133,12 +133,12 @@ export function GameDashboard({ initialSession }: GameDashboardProps) {
 
       // Get friend details
       const friendIds = connections.map((conn) => conn.friend_id);
-      const { data: friendUsers } = await supabase
-        .from("users")
-        .select("id, discord_id")
-        .in("id", friendIds);
+      const { data: friendDiscordConnections } = await supabase
+        .from("discord_connections")
+        .select("user_id, discord_id, discord_username, discord_avatar")
+        .in("user_id", friendIds);
 
-      if (!friendUsers) return;
+      if (!friendDiscordConnections) return;
 
       // Get friend game ownerships
       const { data: ownerships } = await supabase
@@ -148,33 +148,19 @@ export function GameDashboard({ initialSession }: GameDashboardProps) {
 
       setFriendOwnerships(ownerships || []);
 
-      // Get Discord info for each friend
-      const friendsWithInfo = await Promise.all(
-        friendUsers.map(async (user) => {
-          try {
-            const response = await fetch(
-              `/api/discord/user?id=${user.discord_id}`
-            );
-            if (!response.ok) return null;
-            const discordInfo = await response.json();
-            return {
-              id: user.id,
-              name: discordInfo.username,
-              avatar: discordInfo.avatar || undefined,
-              games:
-                ownerships
-                  ?.filter((o) => o.user_id === user.id)
-                  .map((o) => o.game_id) || [],
-            } as Friend;
-          } catch (error) {
-            console.error("Error fetching Discord info:", error);
-            return null;
-          }
-        })
-      );
+      // Use the Discord info directly from discord_connections
+      const friendsWithInfo = friendDiscordConnections.map((connection) => ({
+        id: connection.user_id,
+        name: connection.discord_username,
+        avatar: connection.discord_avatar || undefined,
+        games:
+          ownerships
+            ?.filter((o) => o.user_id === connection.user_id)
+            .map((o) => o.game_id) || [],
+      }));
 
-      // Filter out nulls and set friends
-      setFriends(friendsWithInfo.filter((f): f is Friend => f !== null));
+      // Set friends (no need to filter nulls anymore since we're not doing async operations)
+      setFriends(friendsWithInfo);
     } catch (err) {
       setError(err instanceof Error ? err.message : "An error occurred");
     } finally {

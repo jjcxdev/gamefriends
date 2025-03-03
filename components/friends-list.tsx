@@ -35,24 +35,17 @@ export function FriendsList() {
 
         // Fetch friend details
         const friendPromises = connections.map(async (conn) => {
-          const { data: user } = await supabase
-            .from("users")
-            .select("discord_id")
-            .eq("id", conn.friend_id)
+          const { data: friendDetails } = await supabase
+            .from("discord_connections")
+            .select("discord_id, discord_username, discord_avatar")
+            .eq("user_id", conn.friend_id)
             .single();
 
-          if (!user) return null;
+          if (!friendDetails) return null;
 
-          // Fetch Discord info
-          const response = await fetch(
-            `/api/discord/user?id=${user.discord_id}`
-          );
-          if (!response.ok) return null;
-
-          const discordUser = await response.json();
           return {
-            username: discordUser.username,
-            avatar: discordUser.avatar,
+            username: friendDetails.discord_username,
+            avatar: friendDetails.discord_avatar,
           };
         });
 

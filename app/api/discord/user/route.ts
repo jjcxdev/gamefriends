@@ -18,7 +18,7 @@ export async function GET(request: Request) {
   const supabase = createClient(cookieStore);
 
   try {
-    // Try to get user data from discord_connections table first
+    // Get user data directly from discord_connections table
     const { data: discordConnection } = await supabase
       .from("discord_connections")
       .select("discord_username, discord_avatar")
