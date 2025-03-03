@@ -1,12 +1,10 @@
-import { Gamepad } from "lucide-react";
+import Image from "next/image";
+import GameFriendsLogo from "@/public/images/gamefriends-logo.svg";
 
 export function Logo() {
   return (
     <div className="flex items-center gap-2">
-      <div className="flex w-fit items-center justify-center p-2 bg-muted rounded-full">
-        <Gamepad className="w-8 h-8" />
-      </div>
-      <h1 className="text-3xl font-bold font-gameboy">GameFriends</h1>
+      <Image src={GameFriendsLogo} alt="GameFriends Logo" />
     </div>
   );
 }

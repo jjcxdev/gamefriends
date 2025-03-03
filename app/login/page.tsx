@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/card";
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { Logo } from "@/components/logo";
 
 export default function LoginPage() {
   const supabase = createClient();
@@ -49,11 +50,11 @@ export default function LoginPage() {
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-background">
-      <Card className="w-[350px]">
+      <Card className="w-[300px]">
         <CardHeader className="text-center">
-          <CardTitle>Welcome to GameFriends</CardTitle>
+          <CardTitle>Welcome to</CardTitle>
           <CardDescription>
-            Sign in with Discord to access your game dashboard
+            <Logo />
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -62,7 +63,7 @@ export default function LoginPage() {
             onClick={signInWithDiscord}
           >
             <DiscordLogoIcon className="mr-2 h-5 w-5" />
-            Sign in with Discord
+            Sign in
           </Button>
         </CardContent>
       </Card>

@@ -13,6 +13,11 @@ const retrocomputerFont = localFont({
   variable: "--font-retrocomputer", // Optional
 });
 
+const pixeland = localFont({
+  src: "../public/fonts/Pixeland.ttf",
+  variable: "--font-pixeland", // Optional
+});
+
 import { ThemeProvider } from "@/components/theme-provider";
 import { Toaster } from "@/components/ui/toaster";
 
@@ -30,7 +35,7 @@ export default async function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body
-        className={`${retrocomputerFont.variable} ${gameboyFont.variable} `}
+        className={`${retrocomputerFont.variable} ${gameboyFont.variable} ${pixeland.variable}`}
       >
         <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
           {children}

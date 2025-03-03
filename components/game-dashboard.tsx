@@ -240,9 +240,9 @@ export function GameDashboard({ initialSession }: GameDashboardProps) {
             />
           </div>
           <div>
-            <div className="font-medium">{game.name}</div>
+            <div className="font-medium hidden md:block">{game.name}</div>
             {game.release_date && (
-              <div className="text-xs text-muted-foreground">
+              <div className="text-xs hidden md:block text-muted-foreground">
                 {new Date(game.release_date).getFullYear()}
               </div>
             )}
@@ -261,11 +261,8 @@ export function GameDashboard({ initialSession }: GameDashboardProps) {
   return (
     <>
       <div className="container mx-auto p-4">
-        <div className="flex justify-between max-w-screen-lg mx-auto items-center mb-8">
-          <div className="flex items-center gap-4">
-            <Logo />
-          </div>
-          <div className="flex items-center gap-4">
+        <div className="flex max-w-screen-lg mx-auto flex-col md:flex-row-reverse pb-8 gap-4">
+          <div className="flex w-full md:w-fit justify-end md:items-start md:pt-4 items-center gap-4">
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>
@@ -290,8 +287,12 @@ export function GameDashboard({ initialSession }: GameDashboardProps) {
               </Tooltip>
             </TooltipProvider>
           </div>
+          <div className="flex w-full">
+            <Logo />
+          </div>
         </div>
-        <div className="flex justify-end max-w-screen-lg mx-auto gap-4 items-center mb-8">
+
+        <div className="flex w-full max-w-screen-lg mx-auto justify-between sm:justify-end gap-4 pb-8">
           <DiscordConnect onFriendsUpdated={handleFriendsUpdated} />
           <AddGameDialog onGameAdded={handleGameAdded} />
         </div>

@@ -83,3 +83,7 @@
 .retro-text {
   font-family: var(--font-retrocomputer), sans-serif;
 }
+
+.pixeland-text {
+  font-family: var(--font-pixeland), sans-serif;
+}
