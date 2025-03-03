@@ -59,24 +59,6 @@ export async function GET(request: Request) {
 
       console.log("Discord identity found with ID:", discordIdentity.id);
 
-      // First, ensure the user record exists with discord_id
-      const { error: userError } = await supabase.from("users").upsert(
-        {
-          id: data.user.id,
-          discord_id: discordIdentity.id,
-          updated_at: new Date().toISOString(),
-        },
-        {
-          onConflict: "id",
-        }
-      );
-
-      if (userError) {
-        console.error("Error upserting user record:", userError);
-      } else {
-        console.log("User record updated with discord_id");
-      }
-
       // Use bot token to fetch Discord user data
       const botToken = process.env.DISCORD_BOT_TOKEN;
       if (botToken) {
