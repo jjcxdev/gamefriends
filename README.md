@@ -1,4 +1,4 @@
-<img src="public/images/gamefriends-logo.svg" alt="GameFriends Logo" width="300"/>
+<img src="https://github.com/jjcxdev/gamefriends/blob/main/readme-logo.png?raw=true" alt="GameFriends Logo"/>
 
 # GameFriends
 
