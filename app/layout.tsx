@@ -24,8 +24,24 @@ import { Toaster } from "@/components/ui/toaster";
 
 export const metadata: Metadata = {
   title: "GameFriends",
-  description:
-    "Track your game collection and see what your friends are playing.",
+  description: "See what your friends are playing.",
+  openGraph: {
+    type: "website",
+    url: "https://games.jjcx.dev",
+    title: "GameFriends",
+    description: "See what your friends are playing.",
+    images: [
+      {
+        url: "/images/opengraph-image.png",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "GameFriends",
+    description: "See what your friends are playing.",
+    images: ["/images/twitter-image.png"],
+  },
 };
 
 export default async function RootLayout({
