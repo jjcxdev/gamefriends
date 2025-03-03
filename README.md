@@ -1,3 +1,5 @@
+<img src="public/images/gamefriends-logo.svg" alt="GameFriends Logo" width="300"/>
+
 # GameFriends
 
 GameFriends is a web application that helps you track your game collection and see what your friends are playing. Connect with Discord to find friends who own the same games and discover new titles to play together.
@@ -79,14 +81,15 @@ NEXT_PUBLIC_IGDN_CLIENT_SECRET=your_igdb_client_secret
 
 ## Database Setup
 
-The project uses Supabase for database and authentication. You'll need to set up the following tables:
+The project uses Supabase for database and authentication. The following tables are required:
 
-- `users`: Stores user information
-- `discord_connections`: Stores Discord OAuth tokens and user info
-- `user_games`: Tracks which games users own
+- `users`: Core user information with Discord integration
+- `discord_connections`: Stores Discord OAuth data and user details
+- `friend_connections`: Manages friend relationships
+- `user_games`: Links users to their games
 - `games`: Stores game information
 
-The schema for these tables can be found in the `supabase/schema.sql` file.
+The complete schema for these tables can be found in the `supabase/schema.sql` file.
 
 ## Contributing
 
@@ -107,8 +110,10 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 - [Next.js](https://nextjs.org/) for the React framework
 - [Supabase](https://supabase.io/) for database and authentication
 - [shadcn/ui](https://ui.shadcn.com/) for UI components
-- [IGDB](https://www.igdb.com/) for game data
+- [Radix UI](https://www.radix-ui.com/) for accessible components
 - [Discord](https://discord.com/) for social integration
+- [Lucide](https://lucide.dev/) for icons
+- [Vercel](https://vercel.com/) for deployment and analytics
 
 ## Contact
 
