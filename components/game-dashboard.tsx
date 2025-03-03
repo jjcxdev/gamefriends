@@ -322,9 +322,17 @@ export function GameDashboard({ initialSession }: GameDashboardProps) {
         </div>
 
         {loading ? (
-          <div className="flex justify-center items-center h-64">
-            <Loader2 className="h-8 w-8 animate-spin text-primary" />
-            <span className="ml-2">Loading your game library...</span>
+          <div className="flex flex-col justify-center items-center h-64 gap-2">
+            <div className="text-2xl">LOADING</div>
+            <div className="w-48 h-6 border-2 border-primary p-1 flex gap-1">
+              {Array.from({ length: 8 }).map((_, i) => (
+                <div
+                  key={i}
+                  className="h-full w-full bg-muted-foreground opacity-0 animate-progress-chunk"
+                  style={{ animationDelay: `${i * 0.2}s` }}
+                />
+              ))}
+            </div>
           </div>
         ) : error ? (
           <Card className="border-destructive">
