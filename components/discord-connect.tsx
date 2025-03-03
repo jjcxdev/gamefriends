@@ -175,11 +175,6 @@ export function DiscordConnect({
               value={searchQuery}
               onChange={handleSearchChange}
             />
-            <p className="text-xs text-muted-foreground">
-              To find someone&apos;s Discord ID: Enable Developer Mode in
-              Discord&apos;s Advanced Settings, then right-click their name and
-              select &quot;Copy ID&quot;
-            </p>
           </div>
 
           {isLoading ? (
