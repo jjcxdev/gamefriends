@@ -2,7 +2,6 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { createClient } from "@/utils/supabase/client";
-import { Loader2 } from "lucide-react";
 import type { Session } from "@supabase/supabase-js";
 import Image from "next/image";
 
