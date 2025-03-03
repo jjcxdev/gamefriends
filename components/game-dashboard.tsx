@@ -240,15 +240,7 @@ export function GameDashboard({ initialSession }: GameDashboardProps) {
     }
   };
 
-  const GameRow = ({
-    game,
-    friendGames,
-  }: {
-    game: Game;
-    friendGames?: number[];
-  }) => {
-    const friendHasGame = friendGames?.includes(game.id) ?? false;
-
+  const GameRow = ({ game }: { game: Game }) => {
     return (
       <div className="game-row flex justify-between items-center w-full">
         <div className="flex items-center gap-3">
@@ -370,14 +362,7 @@ export function GameDashboard({ initialSession }: GameDashboardProps) {
                           return (
                             <tr key={game.id}>
                               <td className="p-4 w-1/3 border-r">
-                                <GameRow
-                                  game={game}
-                                  friendGames={friendOwnerships
-                                    .filter(
-                                      (o) => o.user_id !== session?.user?.id
-                                    )
-                                    .map((o) => o.game_id)}
-                                />
+                                <GameRow game={game} />
                               </td>
                               <td className="p-4">
                                 <GameFriendAvatars
