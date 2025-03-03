@@ -118,6 +118,10 @@ export function DiscordConnect({
         description: `Successfully added ${user.username} as a friend!`,
       });
 
+      // Clear search input and results after successfully adding friend
+      setSearchQuery("");
+      setSearchResults([]);
+
       // Refresh the friends list
       onFriendsUpdated();
 

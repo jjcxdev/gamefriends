@@ -71,6 +71,7 @@ export function AddGameDialog({ onGameAdded }: { onGameAdded: () => void }) {
 
     setIsSearching(true);
     setSearchResults([]);
+    setSelectedGame(null);
 
     try {
       const response = await fetch(
@@ -217,6 +218,11 @@ export function AddGameDialog({ onGameAdded }: { onGameAdded: () => void }) {
         title: "Success",
         description: "Game added to your library",
       });
+
+      // Clear search input and results after successfully adding game
+      setSearchQuery("");
+      setSearchResults([]);
+      setSelectedGame(null);
 
       onGameAdded();
       setOpen(false);
