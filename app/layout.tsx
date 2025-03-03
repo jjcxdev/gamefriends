@@ -2,6 +2,7 @@ import type React from "react";
 import type { Metadata } from "next";
 import localFont from "next/font/local";
 import "./globals.css";
+import { Analytics } from "@vercel/analytics/next";
 
 const gameboyFont = localFont({
   src: "../public/fonts/GameBoy.ttf",
@@ -39,6 +40,7 @@ export default async function RootLayout({
       >
         <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
           {children}
+          <Analytics />
           <Toaster />
         </ThemeProvider>
       </body>
